@@ -33,12 +33,33 @@ thread_arguments thread;
 /* Global variables */
 pthread_t first_child_thread_id;
 pthread_t second_child_thread_id;
+int flag =0;
 
 static timer_t timerid;
 
-
 /* Mutex */
 pthread_mutex_t lock;
+
+
+void handler(int signo, siginfo_t *info, void *extra) 
+{
+	flag = 1;
+}
+
+void set_sig_handler(void)
+{
+        struct sigaction action;
+ 
+ 
+        action.sa_flags = SA_SIGINFO; 
+        action.sa_sigaction = handler;
+ 
+        if (sigaction(SIGUSR1, &action, NULL) == -1) { 
+            perror("sigusr: sigaction");
+            _exit(1);
+        }
+ 
+}
 
 
 void thread_handler(union sigval sv)
@@ -80,21 +101,27 @@ void thread_handler(union sigval sv)
 	pthread_mutex_unlock(&lock);
 
 
-	/* print out the posix clock to see that time has incremented
-	 * by 2 seconds.
-	 */
-	// clock_gettime(CLOCK_REALTIME, &thTimeSpec);
-	// printf("Clock_getttime: %ld - ",thTimeSpec.tv_sec);
-
-    /* Will print "2 seconds elapsed." from stored sv data */
+    /* Will print "100 miliseconds elapsed." from stored sv data */
     puts(s);
 
+}
+
+void mask_sig(void)
+{
+	sigset_t mask;
+	sigemptyset(&mask); 
+        sigaddset(&mask, SIGUSR1); 
+                
+        pthread_sigmask(SIG_BLOCK, &mask, NULL);
+        
 }
 
 /* First Child */
 void *first_child(void *argv)
 {
 	filename *first_child_filename = (filename *)argv;
+
+	mask_sig();
 
 	clock_t start;
 
@@ -235,34 +262,11 @@ void *second_child(void *argv)
      */
     timer_settime(timerid, 0, &trigger, NULL);
 
-    while(1);
-
-    //clock_gettime(CLOCK_REALTIME, &mainTimeSpec);
-	//printf("Clock_getttime: %ld (initial) waiting for 100 seconds\n",mainTimeSpec.tv_sec);
+    while(!flag);
 
 
-	/* Apply mutex to make file handling thread safe */
-	//pthread_mutex_lock(&lock);
 
-	/* open file */
-	//thread.file_pointer = fopen(second_child_filename->file,"a");
 
-	/* check for null pointer */
-	// if(thread.file_pointer == NULL)
-	// {
-	// 	printf("File could not be created\n");
-	// }
-	// else
-	// {
-	// 	fprintf(thread.file_pointer,"********************************THREAD 2*********************************\n");
-	// 	fprintf(thread.file_pointer,"Start Time Thread 2: %f seconds\n",((double)start2/CLOCKS_PER_SEC));
-	// 	fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %d	2nd Thread POSIX ID -> %ld\n",tid_2,pthread_self());
-	// 	fprintf(thread.file_pointer,"End Time Thread 2: %f seconds\n",((double)clock()/CLOCKS_PER_SEC));
-	// 	fclose(thread.file_pointer);
-	// }
-	//pthread_mutex_unlock(&lock);
-
-	/* Delete (destroy) the timer */
     timer_delete(timerid);
 }
 
@@ -297,6 +301,8 @@ int main(int argc,char *argv[])
 		printf("Mutex has failed!\n");
 		return 1;
 	}
+
+	set_sig_handler();
 
 	
 	/* Create first child */
