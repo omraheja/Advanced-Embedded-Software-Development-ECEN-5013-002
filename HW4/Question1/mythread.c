@@ -2,10 +2,10 @@
 	@Date  		: 25th February 2019
 	@Filename	: mythread.c
 	@Course 	: Advanced Embedded Software Development Spring 2019
-	@References	: https://riptutorial.com/posix/example/16306/posix-timer-with-sigev-thread-notification 
-				: posix_timer demo code from Professor Richard.
-				: https://www.geeksforgeeks.org/how-to-measure-time-taken-by-a-program-in-c/ 
-				: http://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.XHYOE4VlCoc
+	@References	: [https://riptutorial.com/posix/example/16306/posix-timer-with-sigev-thread-notification] 
+				: [posix_timer demo code from Professor Richard]
+				: [https://www.geeksforgeeks.org/how-to-measure-time-taken-by-a-program-in-c/]
+				: [http://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.XHYOE4VlCoc]
 */
 
 /* Standard C library Headers */
@@ -46,12 +46,14 @@ static timer_t timerid;
 pthread_mutex_t lock;
 
 
+/* Signal Handler */
 void handler(int signo, siginfo_t *info, void *extra) 
 {
 	flag = 1;
 }
 
 
+/* Set the signal handler */
 void set_sig_handler(void)
 {
     struct sigaction action;
@@ -63,22 +65,31 @@ void set_sig_handler(void)
         perror("sigusr: sigaction");
         _exit(1);
     }
-
 }
 
 
+/* Child 2 Thread Handler */
 void thread_handler(union sigval sv)
 {
+	/* Store start time of thread handler in start_handler variable */
 	clock_t start_handler = clock();
+
+	/* Store the info message */
     char *s = sv.sival_ptr;
+
+    /* Create instance of struct timespec*/
 	struct timespec thTimeSpec;
 
+	/* Open /proc/stat file to extract information related to cpu utilization */
 	FILE *file_open = popen("cat /proc/stat | grep 'cpu'","r");
 
+	/* Lock with help of mutex */
 	pthread_mutex_lock(&lock);
 
+	/* Open file */
 	thread.file_pointer = fopen("om.txt","a");
 
+	/* Check for Null condition */
 	if(thread.file_pointer == NULL)
 	{
 		printf("File could not be created\n");
@@ -87,14 +98,11 @@ void thread_handler(union sigval sv)
 	{
 		fprintf(thread.file_pointer,"********************************THREAD 2*********************************\n");
 		fprintf(thread.file_pointer,"Start Time Thread 2: %f seconds\n",((double)start_handler/CLOCKS_PER_SEC));
-		fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %d	2nd Thread POSIX ID -> %ld\n",syscall(SYS_gettid),pthread_self());
+		fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %ld	2nd Thread POSIX ID -> %ld\n",syscall(SYS_gettid),pthread_self());
 		while(!feof(file_open))
 		{	
 			char cpu_util;
 			cpu_util = fgetc(file_open);
-
-			/* open file */
-			//thread.file_pointer = fopen("om.txt","a");
 
 			fprintf(thread.file_pointer,"%c",cpu_util);
 
@@ -111,17 +119,16 @@ void thread_handler(union sigval sv)
 
 }
 
+/* Block signal on all threads except on the thread we want to run the signal in */
 void mask_sig(void)
 {
 	sigset_t mask;
 	sigemptyset(&mask); 
-        sigaddset(&mask, SIGUSR1); 
-                
-        pthread_sigmask(SIG_BLOCK, &mask, NULL);
-        
+    sigaddset(&mask, SIGUSR1); 
+    pthread_sigmask(SIG_BLOCK, &mask, NULL);    
 }
 
-/* First Child */
+/* Thread 1 */
 void *first_child(void *argv)
 {
 	filename *first_child_filename = (filename *)argv;
@@ -132,13 +139,16 @@ void *first_child(void *argv)
 
 	double cpu_time_used;
 
-	start = clock();
+	start = clock();				
 
-	char ch;						//character to read the file content
+	/* character to read the file content */
+	char ch;						
 
-	char lower_case_ch;				//character to store content in lower case
+	/* character to store content in lower case */
+	char lower_case_ch;				
 
-	int char_count[256]={0};		//array to store the count of each alphabet
+	/* array to store the count of each alphabet */
+	int char_count[256]={0};		
 
 	/* take file name as argument */
 	char *argument1 = (char *)argv;
@@ -189,7 +199,7 @@ void *first_child(void *argv)
 		fprintf(thread.file_pointer,"********************************THREAD 1*********************************\n");
 		fprintf(thread.file_pointer,"Start Time Thread 1: %f seconds\n",((double)start/CLOCKS_PER_SEC));
 		fprintf(thread.file_pointer,"1st Thread LINUX ID -> %d	1st Thread POSIX ID -> %ld\n",tid_1,pthread_self());
-				for(int i=97;i<123;i++)
+		for(int i=97;i<123;i++)
 		{
 			if(char_count[i]< 100)
 			{
@@ -204,26 +214,26 @@ void *first_child(void *argv)
 
 }
 
+
+/* Thread 2 */
 void *second_child(void *argv)
 {
 	char info[] = "100 miliseconds elapsed";
 
+	/* Store file name in a variable local to the thread */
 	filename *second_child_filename = (filename *)argv;
 
+	/* Create instances for struct sigevent, timespec and itimerspec */
 	struct sigevent sev;
 	struct timespec mainTimeSpec;	
+	struct itimerspec trigger;
 	
-
+	/* Store timer count */
 	clock_t start2;
 	double cpu_time_used2;
 	
-	struct itimerspec trigger;
-
 	/* Record the start time of the thread 2 */
 	start2 = clock();
-
-	/* take file name as argument */
-	//char *argument2 = (char *)argv;
 
 	/* Linux Thread id */
 	pid_t tid_2 = syscall(SYS_gettid);
@@ -268,25 +278,17 @@ void *second_child(void *argv)
 
     while(!flag);
 
-
-	
-
     timer_delete(timerid);
 }
 
 
 int main(int argc,char *argv[])
 {
-
-
+	/* Variable to store the timer count */
 	clock_t start_parent;
-
 	double cpu_time_used_parent;
 
 	start_parent = clock();
-
-	struct sigevent sev;
-	struct timespec mainTimeSpec;
 
 	/* structure instance for passing filename */
 	filename file_name;
@@ -306,22 +308,22 @@ int main(int argc,char *argv[])
 		return 1;
 	}
 
+	/* Set signal handler */
 	set_sig_handler();
 
 	
-	/* Create first child */
+	/* Create first child/Thread */
 	pthread_create(&first_child_thread_id,NULL, first_child, (void *)&file_name);
 
-	/* Create second child */
+	/* Create second child/Thread */
 	pthread_create(&second_child_thread_id,NULL, second_child, (void *)&file_name);
-
 
 	/* Apply mutex to make file handling thread safe */
 	pthread_mutex_lock(&lock);
 
 	/* open file */
-	thread.file_pointer = fopen(argv[1],"a");
-
+	thread.file_pointer = fopen(file_name.file,"a");
+	
 	/* check for null pointer */
 	if(thread.file_pointer == NULL)
 	{

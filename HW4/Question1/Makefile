@@ -1,12 +1,14 @@
 # _*_ Makefile _*_
 
+CC=gcc
+
 OBJ = mythread.o
 
 mythread: $(OBJ)
-	gcc -o mythread $(OBJ) -pthread -lrt
+	$(CC) -o mythread $(OBJ) -pthread -lrt
 
 mythread.o: mythread.c
-	gcc -c mythread.c
+	$(CC) -c mythread.c
 
 clean:
 	rm *.o mythread
