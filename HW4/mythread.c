@@ -23,6 +23,9 @@ typedef struct{
 	FILE *file_pointer;
 }thread_arguments;
 
+typedef struct{
+	char *file;
+}filename;
 
 /* Global instances of structure thread_arguments */
 thread_arguments thread;
@@ -41,6 +44,8 @@ pthread_mutex_t lock;
 /* First Child */
 void *first_child(void *argv)
 {
+	filename *first_child_filename = (filename *)argv;
+
 
 	clock_t start;
 
@@ -91,7 +96,7 @@ void *first_child(void *argv)
 	pthread_mutex_lock(&lock);
 
 	/* open file */
-	thread.file_pointer = fopen(argument1,"a");
+	thread.file_pointer = fopen(first_child_filename->file,"a");
 
 	/* check for null pointer */
 	if(thread.file_pointer == NULL)
@@ -120,6 +125,7 @@ void *first_child(void *argv)
 
 void *second_child(void *argv)
 {
+	filename *second_child_filename = (filename *)argv;
 
 	clock_t start2;
 
@@ -137,7 +143,7 @@ void *second_child(void *argv)
 	pthread_mutex_lock(&lock);
 
 	/* open file */
-	thread.file_pointer = fopen(argument2,"a");
+	thread.file_pointer = fopen(second_child_filename->file,"a");
 
 	/* check for null pointer */
 	if(thread.file_pointer == NULL)
@@ -157,20 +163,20 @@ void *second_child(void *argv)
 
 }
 
-//void thread_handler(union sigval sv)
-//{
-//	char *s = sv.sival_ptr;
-//	struct timespec thTimeSpec;
+void thread_handler(union sigval sv)
+{
+	char *s = sv.sival_ptr;
+	struct timespec thTimeSpec;
 
 	/* print out the posix clock to see that time has incremented
 	 * by 2 seconds.
 	 */
-//	clock_gettime(CLOCK_REALTIME, &thTimeSpec);
-//	printf("Clock_getttime: %ld - ",thTimeSpec.tv_sec);
+	clock_gettime(CLOCK_REALTIME, &thTimeSpec);
+	printf("Clock_getttime: %ld - ",thTimeSpec.tv_sec);
 
     /* Will print "2 seconds elapsed." from stored sv data */
-//    puts(s);
-//}
+   puts(s);
+}
 
 
 
@@ -179,9 +185,20 @@ void *second_child(void *argv)
 int main(int argc,char *argv[])
 {
 //	char info[]="100ms elapsed";
+	clock_t start_parent;
+
+	double cpu_time_used_parent;
+
+	start_parent = clock();
 
 	struct sigevent sev;
 	struct timespec mainTimeSpec;
+
+	/* structure instance for passing filename */
+	filename file_name;
+
+	/* assign file name to the member of the structure */
+	file_name.file = argv[1];
 
 	/* Linux Thread id */
 	pid_t tid_parent = syscall(SYS_gettid);
@@ -197,10 +214,10 @@ int main(int argc,char *argv[])
 
 	
 	/* Create first child */
-	pthread_create(&first_child_thread_id,NULL, first_child, (void *)argv[1]);
+	pthread_create(&first_child_thread_id,NULL, first_child, (void *)&file_name);
 
 	/* Create second child */
-	pthread_create(&second_child_thread_id,NULL, second_child, (void *)argv[1]);
+	pthread_create(&second_child_thread_id,NULL, second_child, (void *)&file_name);
 
 
 	/* Apply mutex to make file handling thread safe */
@@ -217,7 +234,9 @@ int main(int argc,char *argv[])
 	else
 	{
 		fprintf(thread.file_pointer,"******************************PARENT THREAD******************************\n");
+		fprintf(thread.file_pointer,"Start Time Parent Thread: %f seconds\n",((double)start_parent/CLOCKS_PER_SEC));
 		fprintf(thread.file_pointer,"Parent Thread LINUX ID -> %d	Parent Thread POSIX ID -> %ld\n",tid_parent,pthread_self());
+		fprintf(thread.file_pointer,"End Time Parent Thread: %f seconds\n",((double)clock()/CLOCKS_PER_SEC));
 		fclose(thread.file_pointer);
 	}
 	pthread_mutex_unlock(&lock);
@@ -237,7 +256,7 @@ int main(int argc,char *argv[])
      *
      */
 //    sev.sigev_notify = SIGEV_THREAD;				
-//   	sev.sigev_notify_function = &thread_handler;
+//    sev.sigev_notify_function = &thread_handler;
 //    sev.sigev_value.sival_ptr = &info;
 
      /* Create the timer. In this example, CLOCK_REALTIME is used as the
