@@ -34,18 +34,67 @@ thread_arguments thread;
 pthread_t first_child_thread_id;
 pthread_t second_child_thread_id;
 
+static timer_t timerid;
+
+
 /* Mutex */
 pthread_mutex_t lock;
 
 
-//static timer_t timerid;
-//struct itimerspec trigger;
+void thread_handler(union sigval sv)
+{
+	clock_t start_handler = clock();
+    char *s = sv.sival_ptr;
+	struct timespec thTimeSpec;
+
+	FILE *file_open = popen("cat /proc/stat | grep 'cpu'","r");
+
+	pthread_mutex_lock(&lock);
+
+	thread.file_pointer = fopen("om.txt","a");
+
+	if(thread.file_pointer == NULL)
+	{
+		printf("File could not be created\n");
+	}
+	else
+	{
+		fprintf(thread.file_pointer,"********************************THREAD 2*********************************\n");
+		fprintf(thread.file_pointer,"Start Time Thread 2: %f seconds\n",((double)start_handler/CLOCKS_PER_SEC));
+		fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %d	2nd Thread POSIX ID -> %ld\n",syscall(SYS_gettid),pthread_self());
+		while(!feof(file_open))
+		{	
+			char cpu_util;
+			cpu_util = fgetc(file_open);
+
+			/* open file */
+			//thread.file_pointer = fopen("om.txt","a");
+
+			fprintf(thread.file_pointer,"%c",cpu_util);
+
+		}
+		pclose(file_open);
+		fprintf(thread.file_pointer,"End Time Thread 2: %f seconds\n",((double)clock()/CLOCKS_PER_SEC));
+		fclose(thread.file_pointer);
+	}
+	pthread_mutex_unlock(&lock);
+
+
+	/* print out the posix clock to see that time has incremented
+	 * by 2 seconds.
+	 */
+	// clock_gettime(CLOCK_REALTIME, &thTimeSpec);
+	// printf("Clock_getttime: %ld - ",thTimeSpec.tv_sec);
+
+    /* Will print "2 seconds elapsed." from stored sv data */
+    puts(s);
+
+}
 
 /* First Child */
 void *first_child(void *argv)
 {
 	filename *first_child_filename = (filename *)argv;
-
 
 	clock_t start;
 
@@ -125,66 +174,103 @@ void *first_child(void *argv)
 
 void *second_child(void *argv)
 {
+	char info[] = "100 miliseconds elapsed";
+
 	filename *second_child_filename = (filename *)argv;
 
+	struct sigevent sev;
+	struct timespec mainTimeSpec;	
+	
+
 	clock_t start2;
-
 	double cpu_time_used2;
+	
+	struct itimerspec trigger;
 
+
+	/* Record the start time of the thread 2 */
 	start2 = clock();
 
 	/* take file name as argument */
-	char *argument2 = (char *)argv;
+	//char *argument2 = (char *)argv;
 
 	/* Linux Thread id */
 	pid_t tid_2 = syscall(SYS_gettid);
 
+	/* Set all `sev` and `trigger` memory to 0 */
+    memset(&sev, 0, sizeof(struct sigevent));
+    memset(&trigger, 0, sizeof(struct itimerspec));
+
+
+    /* 
+     * Set the notification method as SIGEV_THREAD:
+     *
+     * Upon timer expiration, `sigev_notify_function` (thread_handler()),
+     * will be invoked as if it were the start function of a new thread.
+     *
+     */
+    sev.sigev_notify = SIGEV_THREAD;
+    sev.sigev_notify_function = &thread_handler;
+    sev.sigev_value.sival_ptr = &info;
+
+   /*
+    * Create the timer. In this example, CLOCK_REALTIME is used as the
+    * clock, meaning that we're using a system-wide real-time clock for 
+    * this timer.
+    */
+      timer_create(CLOCK_REALTIME, &sev, &timerid);
+
+
+    /* Timer expiration will occur withing 2 seconds after being armed
+     * by timer_settime(). Then the interval timer will takeover 
+     */
+    trigger.it_value.tv_nsec = 100000000;
+
+	/* Uncomment the following line to set the interval timer and
+	 * and see the threadhandler() execute periodically.
+	 */
+    trigger.it_interval.tv_nsec = 100000000;
+
+    /* Arm the timer. No flags are set and no old_value will be retrieved.
+     */
+    timer_settime(timerid, 0, &trigger, NULL);
+
+    while(1);
+
+    //clock_gettime(CLOCK_REALTIME, &mainTimeSpec);
+	//printf("Clock_getttime: %ld (initial) waiting for 100 seconds\n",mainTimeSpec.tv_sec);
+
+
 	/* Apply mutex to make file handling thread safe */
-	pthread_mutex_lock(&lock);
+	//pthread_mutex_lock(&lock);
 
 	/* open file */
-	thread.file_pointer = fopen(second_child_filename->file,"a");
+	//thread.file_pointer = fopen(second_child_filename->file,"a");
 
 	/* check for null pointer */
-	if(thread.file_pointer == NULL)
-	{
-		printf("File could not be created\n");
-	}
-	else
-	{
-		fprintf(thread.file_pointer,"********************************THREAD 2*********************************\n");
-		fprintf(thread.file_pointer,"Start Time Thread 2: %f seconds\n",((double)start2/CLOCKS_PER_SEC));
-		fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %d	2nd Thread POSIX ID -> %ld\n",tid_2,pthread_self());
-		fprintf(thread.file_pointer,"End Time Thread 2: %f seconds\n",((double)clock()/CLOCKS_PER_SEC));
-		fclose(thread.file_pointer);
-	}
-	pthread_mutex_unlock(&lock);
+	// if(thread.file_pointer == NULL)
+	// {
+	// 	printf("File could not be created\n");
+	// }
+	// else
+	// {
+	// 	fprintf(thread.file_pointer,"********************************THREAD 2*********************************\n");
+	// 	fprintf(thread.file_pointer,"Start Time Thread 2: %f seconds\n",((double)start2/CLOCKS_PER_SEC));
+	// 	fprintf(thread.file_pointer,"2nd Thread LINUX ID -> %d	2nd Thread POSIX ID -> %ld\n",tid_2,pthread_self());
+	// 	fprintf(thread.file_pointer,"End Time Thread 2: %f seconds\n",((double)clock()/CLOCKS_PER_SEC));
+	// 	fclose(thread.file_pointer);
+	// }
+	//pthread_mutex_unlock(&lock);
 
-
+	/* Delete (destroy) the timer */
+    timer_delete(timerid);
 }
-
-void thread_handler(union sigval sv)
-{
-	char *s = sv.sival_ptr;
-	struct timespec thTimeSpec;
-
-	/* print out the posix clock to see that time has incremented
-	 * by 2 seconds.
-	 */
-	clock_gettime(CLOCK_REALTIME, &thTimeSpec);
-	printf("Clock_getttime: %ld - ",thTimeSpec.tv_sec);
-
-    /* Will print "2 seconds elapsed." from stored sv data */
-   puts(s);
-}
-
-
-
 
 
 int main(int argc,char *argv[])
 {
-//	char info[]="100ms elapsed";
+
+
 	clock_t start_parent;
 
 	double cpu_time_used_parent;
@@ -240,60 +326,6 @@ int main(int argc,char *argv[])
 		fclose(thread.file_pointer);
 	}
 	pthread_mutex_unlock(&lock);
-
-
-
-
-	/* Setting all 'sev' and 'trigger' memory to 0 */
-//	memset(&sev,0,sizeof(struct sigevent));
-//	memset(&trigger,0,sizeof(struct itimerspec));
-
-	/* 
-     * Set the notification method as SIGEV_THREAD:
-     *
-     * Upon timer expiration, `sigev_notify_function` (thread_handler()),
-     * will be invoked as if it were the start function of a new thread.
-     *
-     */
-//    sev.sigev_notify = SIGEV_THREAD;				
-//    sev.sigev_notify_function = &thread_handler;
-//    sev.sigev_value.sival_ptr = &info;
-
-     /* Create the timer. In this example, CLOCK_REALTIME is used as the
-      * clock, meaning that we're using a system-wide real-time clock for
-      * this timer.
-      */
-//    timer_create(CLOCK_REALTIME, &sev, &timerid);
-
-    /* Timer expiration will occur withing 2 seconds after being armed
-     * by timer_settime(). Then the interval timer will takeover 
-     */
-//    trigger.it_value.tv_sec = 0;
-
-	/* Uncomment the following line to set the interval timer and
-	 * and see the threadhandler() execute periodically.
-	 */
-//     trigger.it_interval.tv_nsec = 100000000;
-
-    /* Arm the timer. No flags are set and no old_value will be retrieved.
-     */
-//    timer_settime(timerid, 0, &trigger, NULL);
-
-//	clock_gettime(CLOCK_REALTIME, &mainTimeSpec);
-//	printf("Clock_getttime: %ld (initial) waiting for 2 seconds\n",mainTimeSpec.tv_sec);
-
-        
-	/* Delete (destroy) the timer */
-//    timer_delete(timerid);
-
-
-
-
-
-
-
-
-
 
 
 	/* Block the calling thread until specified thread terminates */
