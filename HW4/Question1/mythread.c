@@ -5,6 +5,7 @@
 	@References	: https://riptutorial.com/posix/example/16306/posix-timer-with-sigev-thread-notification 
 				: posix_timer demo code from Professor Richard.
 				: https://www.geeksforgeeks.org/how-to-measure-time-taken-by-a-program-in-c/ 
+				: http://devarea.com/linux-handling-signals-in-a-multithreaded-application/#.XHYOE4VlCoc
 */
 
 /* Standard C library Headers */
@@ -12,30 +13,34 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <pthread.h>
 #include <unistd.h>			/* for sleep() */
 #include <string.h>			/* for memset() */
 #include <signal.h>			/* for struct sigevent and SIGEV_THREAD */
 #include <time.h>			/* for timer_create(), struct itimerspec,timer_t and CLOCK_REALTIME */
-#include <ctype.h>
+
 
 typedef struct{
 	FILE *file_pointer;
 }thread_arguments;
 
+
 typedef struct{
 	char *file;
 }filename;
 
+
 /* Global instances of structure thread_arguments */
 thread_arguments thread;
+
 
 /* Global variables */
 pthread_t first_child_thread_id;
 pthread_t second_child_thread_id;
-int flag =0;
-
+int flag = 0;
 static timer_t timerid;
+
 
 /* Mutex */
 pthread_mutex_t lock;
@@ -46,19 +51,19 @@ void handler(int signo, siginfo_t *info, void *extra)
 	flag = 1;
 }
 
+
 void set_sig_handler(void)
 {
-        struct sigaction action;
+    struct sigaction action;
+    action.sa_flags = SA_SIGINFO; 
+    action.sa_sigaction = handler;
  
- 
-        action.sa_flags = SA_SIGINFO; 
-        action.sa_sigaction = handler;
- 
-        if (sigaction(SIGUSR1, &action, NULL) == -1) { 
-            perror("sigusr: sigaction");
-            _exit(1);
-        }
- 
+    if (sigaction(SIGUSR1, &action, NULL) == -1)
+    { 
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+
 }
 
 
@@ -214,7 +219,6 @@ void *second_child(void *argv)
 	
 	struct itimerspec trigger;
 
-
 	/* Record the start time of the thread 2 */
 	start2 = clock();
 
@@ -265,7 +269,7 @@ void *second_child(void *argv)
     while(!flag);
 
 
-
+	
 
     timer_delete(timerid);
 }
