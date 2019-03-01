@@ -32,16 +32,15 @@ FILE *fileptr;
 
 
 /* Array of string for populating the structure */
-char *array[]={"Message0","Message1","Message2","Message3","Message4"};
 char *array_for_parent[]={"parent0","parent1","parent2","parent3","parent4","parent5","parent6","parent7","parent8","parent9"};
 char *array_for_child[]={"child0","child1","child2","child3","child4","child5","child6","child7","child8","child9"};
 
 int main()
 {
-	int pipe1[2]; //parent to write, child to read
-	int pipe2[2]; //child to write, parent to read
-	int returnstatus1; //check pipe()
-	int returnstatus2; //check pipe()
+	int pipe1[2]; 		//parent to write, child to read
+	int pipe2[2]; 		//child to write, parent to read
+	int returnstatus1; 	//check pipe()
+	int returnstatus2; 	//check pipe()
 	pid_t pid;
 	
 	char readmsg[20];
@@ -77,18 +76,24 @@ int main()
 
 	if(pid<0)
 	{
-		printf("Fork Failed\n");
+		fileptr = fopen("om.txt","a");
+		fprintf(fileptr,"Fork Failed\n");
+		fclose(fileptr);
 		return 1;
 	}
 	else if (pid == 0)			//child process
 	{
-		printf("Writing from child to parent\n");
+		fileptr = fopen("om.txt","a");
+		fprintf(fileptr,"Writing from child to parent\n");
+		fclose(fileptr);
+
 		/* Writing to Parent (string) */
 		for(int i=0;i<10;i++)
 		{
 			payload.string = array_for_parent[i];
 			write(pipe2[1],payload.string,sizeof(readmsg));
 		}
+		
 
 		/* Writing from child to parent (integer) */
 		for(int i=0;i<5;i++)
@@ -97,43 +102,53 @@ int main()
 			write(pipe2[1],&payload.string_length,sizeof(int));
 		}
 
-		printf("Reading from Child\n");
+		fileptr=fopen("om.txt","a");	
+		fprintf(fileptr,"Reading from Child\n");
 		/* Reading from Parent */	
 		for(int i=0;i<10;i++)
 		{
 			memset(buffer,0,sizeof(buffer));
 			read(pipe1[0],&buffer,sizeof(buffer));
-			printf("Message received from Parent: %s\n",buffer);
+			fprintf(fileptr,"Message received from Parent: %s\n",buffer);
 		}
+		fclose(fileptr);
+
+		fileptr=fopen("om.txt","a");
 		for(int i=0;i<5;i++)
 		{
-			//memset(buffer1,0,sizeof(buffer1));
+			
 			read(pipe1[0],&buffer1,sizeof(int));
-			printf("Integer Reveiced from parent : %d\n",buffer1);
+			fprintf(fileptr,"Integer Received from parent : %d\n",buffer1);
 		}
-		
+		fclose(fileptr);
 	}
 	else			//parent process
 	{
-		printf("In Parent Process\n");
+		fileptr=fopen("om.txt","a");
+		fprintf(fileptr,"In Parent Process\n");
 		/* Reading from Child */
 		for(int i=0;i<10;i++)
 		{
 			memset(readmsg,0,sizeof(readmsg));
 			read(pipe2[0],&readmsg,sizeof(readmsg));
-			printf("Message Received from child: %s\n",readmsg);
+			fprintf(fileptr,"Message Received from child: %s\n",readmsg);
 
 		}
+		fclose(fileptr);
+
+		fileptr=fopen("om.txt","a");
+
 		for(int i=0;i<5;i++)
 		{
-//			memset(readmsg1,0,sizeof(readmsg1));
 			read(pipe2[0],&readmsg1,sizeof(int));
-			printf("Integer Received from child: %d\n",readmsg1);
+			fprintf(fileptr,"Integer Received from child: %d\n",readmsg1);
 
 		}
+		fclose(fileptr);
 
-
-		printf("Writing to Child\n");
+		fileptr=fopen("om.txt","a");
+		fprintf(fileptr,"Writing to Child\n");
+		fclose(fileptr);
 		/* Writing to Child (String) */
 		for(int i=0;i<10;i++)
 		{
@@ -146,7 +161,5 @@ int main()
 			info.string_length=strlen(array_for_child[i]);
 			write(pipe1[1],&info.string_length,sizeof(int));
 		}
-
-
 	}
 }
