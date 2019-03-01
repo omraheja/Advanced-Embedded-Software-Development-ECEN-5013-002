@@ -137,6 +137,7 @@ int main()
 			fprintf(fileptr,"Integer Received from parent : %d\n",buffer1);
 		}
 		fclose(fileptr);
+
 	}
 	else			//parent process
 	{
