@@ -10,19 +10,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <netdb.h>
+#include <time.h>
+#include <sys/time.h>
 
-#define DATA "Hello Om!"
+typedef struct{
+	char *string;
+	int string_length;
+	int led_control_command;
+}msg_t;
+
+char* timestamp()
+{
+	time_t ltime; 		//calendar time
+	ltime=time(NULL);	//get current cal time
+	return (asctime(localtime(&ltime)));
+}
+
+/* File pointer */
+FILE *fileptr;
+
+/* Array of string for populating the structure */
+char *array_for_client[]={"client0","client1","client2","client3","client4","client5","client6","client7","client8","client9"};
+char *array_for_server[]={"server0","server1","server2","server3","server4","server5","server6","server7","server8","server9"};
 
 int main(int argc,char *argv[])
 {
 	int sock;
 	struct sockaddr_in server;
-	struct hostent *hp;
-	char buffer[1024];
 
+	msg_t client;
 
-
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	sock = socket(AF_INET, SOCK_STREAM, 0); //create socket
 
 	if(sock < 0)
 	{
@@ -32,18 +50,9 @@ int main(int argc,char *argv[])
 
 
 	server.sin_family = AF_INET;
-
-	hp = gethostbyname (argv[1]);
-
-	if(hp == 0)
-	{
-		perror("gethostbyname failed");
-		close(sock);
-		exit(1);
-	}
-
-	memcpy(&server.sin_addr, hp->h_addr, hp->h_length);
 	server.sin_port = htons(5000);
+	server.sin_addr.s_addr = inet_addr("127.0.0.1");
+
 
 	if(connect(sock,(struct sockaddr *)&server,sizeof(server)) < 0)
 	{
@@ -51,16 +60,23 @@ int main(int argc,char *argv[])
 		close(sock);
 		exit(1);
 	}
+	
 
-	if(send(sock,DATA,sizeof(DATA),0) < 0)
+	while(1)
 	{
-		perror("Send Failed");
-		exit(1);
+
+		for(int i=0;i<10;i++)
+		{
+			send(sock,array_for_client[i],20,0);
+
+		}
+
+		// if(send(sock,,20,0) < 0)
+		// {
+		// 	perror("Send Failed");
+		// 	exit(1);
+		// }
 	}
-
-	write(sock,DATA,sizeof(DATA));
-	printf("Sent %s\n",DATA);
-
 
 	close(sock);
 

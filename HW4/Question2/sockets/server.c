@@ -8,6 +8,24 @@
 #include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
+#include <sys/time.h>
+
+typedef struct{
+	char *string;
+	int string_length;
+	int led_control_command;
+}msg_t;
+
+char* timestamp()
+{
+	time_t ltime; 		//calendar time
+	ltime=time(NULL);	//get current cal time
+	return (asctime(localtime(&ltime)));
+}
+
+/* File pointer */
+FILE *fileptr;
 
 
 int main(int argc,char *argv[])
@@ -46,10 +64,12 @@ int main(int argc,char *argv[])
 	/* Listen to network */
 	listen(sock,5);
 
-	/* Accept */
-	do{
+	mysock = accept(sock, (struct sockaddr *) 0,0);
 
-		mysock = accept(sock, (struct sockaddr *) 0,0);
+	/* Accept */
+	for(int i=0;i<10;i++)
+	{
+		//mysock = accept(sock, (struct sockaddr *) 0,0);
 		if(mysock == -1)
 		{
 			perror("Accept Failed");
@@ -57,7 +77,7 @@ int main(int argc,char *argv[])
 		else
 		{
 			memset(buffer,0,sizeof(buffer));
-			if(ret_val = recv(mysock,buffer,sizeof(buffer),0) < 0)
+			if(ret_val = recv(mysock,buffer,/*sizeof(buffer)*/20,0) < 0)
 			{
 				perror("Reading stream message error");
 			}
@@ -71,11 +91,17 @@ int main(int argc,char *argv[])
 			}
 
 			printf("Message Received\nRet_v	al = %d\n",ret_val);
+			printf("Message Received\nRet_v	al = %s\n",buffer);
 
-			close(mysock);
+
+
+			//close(mysock);
 
 		}
-	}while(1);
+	}
+
+	close(mysock);
+
 	
 	return 0;
 
