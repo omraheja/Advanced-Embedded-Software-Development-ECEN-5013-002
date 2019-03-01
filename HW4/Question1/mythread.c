@@ -169,8 +169,9 @@ void *first_child(void *argv)
 	}
 	else
 	{
-		while((ch=fgetc(read_file)) != EOF)
+		while(!feof(read_file))
 		{
+			ch = fgetc(read_file);
 			lower_case_ch = tolower(ch);
 
 			if((lower_case_ch >= 97) && (lower_case_ch <= 122))

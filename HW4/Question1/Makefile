@@ -1,11 +1,11 @@
 # _*_ Makefile _*_
 
-CC=gcc
+CC=arm-linux-gcc
 
 OBJ = mythread.o
 
 mythread: $(OBJ)
-	$(CC) -o mythread $(OBJ) -pthread -lrt
+	$(CC) -o mythread $(OBJ) -lpthread -lrt
 
 mythread.o: mythread.c
 	$(CC) -c mythread.c
