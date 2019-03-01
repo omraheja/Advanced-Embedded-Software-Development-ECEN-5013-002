@@ -47,6 +47,9 @@ int main()
 	char readmsg[20];
 	char buffer[20];
 
+	int readmsg1;
+	int buffer1;
+
 	msg_t payload;
 	msg_t info;
 
@@ -80,13 +83,18 @@ int main()
 	else if (pid == 0)			//child process
 	{
 		printf("Writing from child to parent\n");
-		/* Writing to Parent */
+		/* Writing to Parent (string) */
 		for(int i=0;i<10;i++)
 		{
 			payload.string = array_for_parent[i];
 			write(pipe2[1],payload.string,sizeof(readmsg));
-//			write(pipe2[1],"Hello Parent!",sizeof(readmsg));
+		}
 
+		/* Writing from child to parent (integer) */
+		for(int i=0;i<5;i++)
+		{
+			payload.string_length=strlen(array_for_parent[i]);
+			write(pipe2[1],&payload.string_length,sizeof(int));
 		}
 
 		printf("Reading from Child\n");
@@ -96,6 +104,12 @@ int main()
 			memset(buffer,0,sizeof(buffer));
 			read(pipe1[0],&buffer,sizeof(buffer));
 			printf("Message received from Parent: %s\n",buffer);
+		}
+		for(int i=0;i<5;i++)
+		{
+			//memset(buffer1,0,sizeof(buffer1));
+			read(pipe1[0],&buffer1,sizeof(int));
+			printf("Integer Reveiced from parent : %d\n",buffer1);
 		}
 		
 	}
@@ -107,17 +121,32 @@ int main()
 		{
 			memset(readmsg,0,sizeof(readmsg));
 			read(pipe2[0],&readmsg,sizeof(readmsg));
-			printf("Message Received: %s\n",readmsg);
+			printf("Message Received from child: %s\n",readmsg);
+
+		}
+		for(int i=0;i<5;i++)
+		{
+//			memset(readmsg1,0,sizeof(readmsg1));
+			read(pipe2[0],&readmsg1,sizeof(int));
+			printf("Integer Received from child: %d\n",readmsg1);
 
 		}
 
+
 		printf("Writing to Child\n");
-		/* Writing to Child */
+		/* Writing to Child (String) */
 		for(int i=0;i<10;i++)
 		{
 			info.string = array_for_child[i];
 			write(pipe1[1],info.string,sizeof(buffer));
-			//write(pipe1[1],"Hello Child!",sizeof(buffer));
 		}
+		/* Writing to Child (Integer) */
+		for(int i=0;i<5;i++)
+		{
+			info.string_length=strlen(array_for_child[i]);
+			write(pipe1[1],&info.string_length,sizeof(int));
+		}
+
+
 	}
 }
