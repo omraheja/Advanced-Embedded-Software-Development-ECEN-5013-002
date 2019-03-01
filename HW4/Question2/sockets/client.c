@@ -36,7 +36,9 @@ char *array_for_server[]={"server0","server1","server2","server3","server4","ser
 int main(int argc,char *argv[])
 {
 	int sock;
+	int ret_val;
 	struct sockaddr_in server;
+	char msgbuffer[1024];
 
 	msg_t client;
 
@@ -67,7 +69,30 @@ int main(int argc,char *argv[])
 
 		for(int i=0;i<10;i++)
 		{
-			send(sock,array_for_client[i],20,0);
+			client.string = array_for_client[i];
+			
+			//working->send(sock,array_for_client[i],20,0);
+			send(sock,client.string,strlen(client.string),0);
+
+
+			memset(msgbuffer,0,sizeof(msgbuffer));
+			if(ret_val = recv(sock,msgbuffer,7,0) < 0)
+			{
+				perror("Reading stream message error");
+			}
+			else if(ret_val == 0)
+			{
+				printf("Ending Connection\n");
+			}
+			else
+			{
+				printf("Message : %s\n",msgbuffer);
+			}
+
+			// printf("Message Received\nRet_v	al = %d\n",ret_val);
+			printf("Message Received\nRet_v	al = %s\n",msgbuffer);
+
+			sleep(1);
 
 		}
 

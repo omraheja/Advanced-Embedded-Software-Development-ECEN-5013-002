@@ -27,6 +27,10 @@ char* timestamp()
 /* File pointer */
 FILE *fileptr;
 
+/* Array of string for populating the structure */
+char *array_for_client[]={"client0","client1","client2","client3","client4","client5","client6","client7","client8","client9"};
+char *array_for_server[]={"server0","server1","server2","server3","server4","server5","server6","server7","server8","server9"};
+
 
 int main(int argc,char *argv[])
 {
@@ -38,6 +42,8 @@ int main(int argc,char *argv[])
 	int ret_val;	
 	int len;
 	char filereader[30];
+
+	msg_t srvr;
 
 	/* Create TCP/IP socket */
 	sock = socket(AF_INET,SOCK_STREAM,0);
@@ -77,7 +83,7 @@ int main(int argc,char *argv[])
 		else
 		{
 			memset(buffer,0,sizeof(buffer));
-			if(ret_val = recv(mysock,buffer,/*sizeof(buffer)*/20,0) < 0)
+			if(ret_val = recv(mysock,buffer,7,0) < 0)
 			{
 				perror("Reading stream message error");
 			}
@@ -90,12 +96,21 @@ int main(int argc,char *argv[])
 				printf("Message : %s\n",buffer);
 			}
 
-			printf("Message Received\nRet_v	al = %d\n",ret_val);
+			// printf("Message Received\nRet_v	al = %d\n",ret_val);
 			printf("Message Received\nRet_v	al = %s\n",buffer);
 
 
+			srvr.string = array_for_server[i];
 
-			//close(mysock);
+			printf("%s \n", srvr.string);
+			//working->send(sock,array_for_client[i],20,0);
+			int n = send(mysock,srvr.string,strlen(srvr.string),0);
+
+			printf("%d\n", n);
+
+
+
+
 
 		}
 	}
