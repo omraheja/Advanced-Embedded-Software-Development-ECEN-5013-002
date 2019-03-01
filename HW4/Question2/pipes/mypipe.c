@@ -3,6 +3,7 @@
 	@Filename	: mypipe.c
 	@Course 	: Advanced Embedded Software Development Spring 2019
 	@References	: https://www.youtube.com/watch?v=7bNMkvcOKlc
+				: https://stackoverflow.com/questions/9596945/how-to-get-appropriate-timestamp-in-c-for-logs
 */
 
 /* Standard C library Headers */
@@ -29,6 +30,15 @@ typedef struct{
 
 /* File pointer */
 FILE *fileptr;
+
+
+char* timestamp()
+{
+	time_t ltime; 		//calendar time
+	ltime=time(NULL);	//get current cal time
+	return (asctime(localtime(&ltime)));
+}
+
 
 
 /* Array of string for populating the structure */
@@ -77,6 +87,7 @@ int main()
 	if(pid<0)
 	{
 		fileptr = fopen("om.txt","a");
+		fprintf(fileptr,"%s\n",timestamp());
 		fprintf(fileptr,"Fork Failed\n");
 		fclose(fileptr);
 		return 1;
@@ -84,6 +95,7 @@ int main()
 	else if (pid == 0)			//child process
 	{
 		fileptr = fopen("om.txt","a");
+		fprintf(fileptr,"%s",timestamp());
 		fprintf(fileptr,"Writing from child to parent\n");
 		fclose(fileptr);
 
@@ -102,13 +114,16 @@ int main()
 			write(pipe2[1],&payload.string_length,sizeof(int));
 		}
 
-		fileptr=fopen("om.txt","a");	
+		fileptr=fopen("om.txt","a");
+		fprintf(fileptr,"%s",timestamp());
+	
 		fprintf(fileptr,"Reading from Child\n");
 		/* Reading from Parent */	
 		for(int i=0;i<10;i++)
 		{
 			memset(buffer,0,sizeof(buffer));
 			read(pipe1[0],&buffer,sizeof(buffer));
+			fprintf(fileptr,"%s",timestamp());
 			fprintf(fileptr,"Message received from Parent: %s\n",buffer);
 		}
 		fclose(fileptr);
@@ -118,6 +133,7 @@ int main()
 		{
 			
 			read(pipe1[0],&buffer1,sizeof(int));
+			fprintf(fileptr,"%s",timestamp());
 			fprintf(fileptr,"Integer Received from parent : %d\n",buffer1);
 		}
 		fclose(fileptr);
@@ -125,12 +141,14 @@ int main()
 	else			//parent process
 	{
 		fileptr=fopen("om.txt","a");
+		fprintf(fileptr,"%s",timestamp());
 		fprintf(fileptr,"In Parent Process\n");
 		/* Reading from Child */
 		for(int i=0;i<10;i++)
 		{
 			memset(readmsg,0,sizeof(readmsg));
 			read(pipe2[0],&readmsg,sizeof(readmsg));
+			fprintf(fileptr,"%s",timestamp());
 			fprintf(fileptr,"Message Received from child: %s\n",readmsg);
 
 		}
@@ -141,12 +159,14 @@ int main()
 		for(int i=0;i<5;i++)
 		{
 			read(pipe2[0],&readmsg1,sizeof(int));
+			fprintf(fileptr,"%s",timestamp());
 			fprintf(fileptr,"Integer Received from child: %d\n",readmsg1);
 
 		}
 		fclose(fileptr);
 
 		fileptr=fopen("om.txt","a");
+		fprintf(fileptr,"%s",timestamp());
 		fprintf(fileptr,"Writing to Child\n");
 		fclose(fileptr);
 		/* Writing to Child (String) */
