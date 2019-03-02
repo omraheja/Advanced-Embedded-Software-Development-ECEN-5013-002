@@ -21,3 +21,4 @@ client.o:client.c
 
 clean:
 	rm *.o server client
+	rm om.txt
