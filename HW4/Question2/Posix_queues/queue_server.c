@@ -28,6 +28,8 @@
 #define queue_name			"/om_queue"
 #define sizeOfQueue			10
 
+FILE *fptr;
+
 typedef struct{
 	char string[20];
 	int string_length;
@@ -72,10 +74,11 @@ int main()
 			perror("Error in Receiving");
 			return 1;
 		}
-
-		printf("Message Received (C->S)\n");
-		printf("Message : %s\n",receive_info.string);
-		printf("Message Length : %d\n",receive_info.string_length);
+		fptr = fopen("om.txt","a");
+		fprintf(fptr,"Message Received from Client\n");
+		fprintf(fptr,"Message : %s\n",receive_info.string);
+		fprintf(fptr,"Message Length : %d\n",receive_info.string_length);
+		fclose(fptr);
 	}
 
 	msg_t send_info;
@@ -92,9 +95,11 @@ int main()
 			perror("Sending Failed");
 			return 1;
 		}
-			printf("Message Sent!\n");
-			printf("Message:%s\n",send_info.string);
-			printf("Message Length :%d\n",send_info.string_length);
+			fptr = fopen("om.txt","a");
+			fprintf(fptr,"Message Sent to Client!\n");
+			fprintf(fptr,"Message:%s\n",send_info.string);
+			fprintf(fptr,"Message Length :%d\n",send_info.string_length);
+			fclose(fptr);
 			sleep(1);
 	}
 
