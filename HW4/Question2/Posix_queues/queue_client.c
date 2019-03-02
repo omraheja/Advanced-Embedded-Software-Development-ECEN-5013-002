@@ -15,6 +15,7 @@
 #include <mqueue.h>
 #include <time.h>
 #include <sys/time.h>
+#include <signal.h>
 
 #define queue_name			"/om_queue"
 #define sizeOfQueue			10
@@ -37,8 +38,38 @@ long getMicrotime(){
 char *array_for_client[]={"client0","client1","client2","client3","client4","client5","client6","client7","client8","client9"};
 char *array_for_server[]={"server0","server1","server2","server3","server4","server5","server6","server7","server8","server9"};
 
+void set_sig_handler(void);
+void handler(int signo, siginfo_t *info, void *extra);
+
+
+/* Set the signal handler */
+void set_sig_handler(void)
+{
+    struct sigaction action;
+    action.sa_flags = SA_SIGINFO; 
+    action.sa_sigaction = handler;
+ 
+    if (sigaction(SIGINT, &action, NULL) == -1)
+    { 
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+}
+
+/* Signal Handler */
+void handler(int signo, siginfo_t *info, void *extra) 
+{
+	int cls;
+	fptr=fopen("om.txt","a");
+	fprintf(fptr,"Timestamp: %ld\n",getMicrotime());
+	fprintf(fptr,"EXITING PROGRAM\n");
+	fclose(fptr);
+	exit(0);
+}
+	
 int main()
 {
+	set_sig_handler();
 	mqd_t client_queue;
 	msg_t send_info;
 	msg_t receive_info;
@@ -69,6 +100,7 @@ for(int i=0;i<10;i++)
 	}
 
 	fptr = fopen("om.txt","a");
+	fprintf(fptr,"Timestamp < %ld >\n",getMicrotime());
 	fprintf(fptr,"Message Sent to Server!\n");
 	fprintf(fptr,"Message :%s\n",send_info.string);
 	fprintf(fptr,"Message Length : %d\n",send_info.string_length);
@@ -88,6 +120,7 @@ for(int i=0;i<10;i++)
 	}
 
 	fptr = fopen("om.txt","a");
+	fprintf(fptr,"Timestamp < %ld >\n",getMicrotime());
 	fprintf(fptr,"Message Received from Server!\n");
 	fprintf(fptr,"Message : %s\n",receive_info.string);
 	fprintf(fptr,"Message Length : %d\n",receive_info.string_length);

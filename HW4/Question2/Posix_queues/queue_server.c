@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/time.h>
+#include <signal.h>
 
 
 #define queue_name			"/om_queue"
@@ -46,9 +47,37 @@ long getMicrotime(){
 char *array_for_client[]={"client0","client1","client2","client3","client4","client5","client6","client7","client8","client9"};
 char *array_for_server[]={"server0","server1","server2","server3","server4","server5","server6","server7","server8","server9"};
 
+void set_sig_handler(void);
+void handler(int signo, siginfo_t *info, void *extra);
+
+/* Set the signal handler */
+void set_sig_handler(void)
+{
+    struct sigaction action;
+    action.sa_flags = SA_SIGINFO; 
+    action.sa_sigaction = handler;
+ 
+    if (sigaction(SIGINT, &action, NULL) == -1)
+    { 
+        perror("sigusr: sigaction");
+        _exit(1);
+    }
+}
+
+/* Signal Handler */
+void handler(int signo, siginfo_t *info, void *extra) 
+{
+	fptr=fopen("om.txt","a");
+	fprintf(fptr,"Timestamp: %ld\n",getMicrotime());
+	fprintf(fptr,"EXITING PROGRAM\n");
+	fclose(fptr);
+	exit(0);
+}
+
 
 int main()
 {
+	set_sig_handler();
 	char *ptr;
 	mqd_t server_queue;
 	struct mq_attr queue_attr;
@@ -75,6 +104,7 @@ int main()
 			return 1;
 		}
 		fptr = fopen("om.txt","a");
+		fprintf(fptr,"Timestamp < %ld >\n",getMicrotime());
 		fprintf(fptr,"Message Received from Client\n");
 		fprintf(fptr,"Message : %s\n",receive_info.string);
 		fprintf(fptr,"Message Length : %d\n",receive_info.string_length);
@@ -96,6 +126,7 @@ int main()
 			return 1;
 		}
 			fptr = fopen("om.txt","a");
+			fprintf(fptr,"Timestamp < %ld >\n",getMicrotime());
 			fprintf(fptr,"Message Sent to Client!\n");
 			fprintf(fptr,"Message:%s\n",send_info.string);
 			fprintf(fptr,"Message Length :%d\n",send_info.string_length);
