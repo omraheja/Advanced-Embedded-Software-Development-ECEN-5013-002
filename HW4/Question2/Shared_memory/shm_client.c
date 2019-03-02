@@ -1,11 +1,10 @@
 /*  @Author		: Om Raheja
 	@Date  		: 27th February 2019
-	@Filename	: shm_server.c
+	@Filename	: shm_client.c
 	@Course 	: Advanced Embedded Software Development Spring 2019
 	@Reference  : https://gist.github.com/sevko/d23646ba07c77c15fde9
-	
-*/
 
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,10 +28,6 @@ const char *mem_name = "/shared_memory";
 const char *sem_cli	= "sem_cli";
 const char *sem_ser	= "sem_ser";
 
-/* Global Variables */
-FILE *fptr;
-sem_t *semaphore1,*semaphore2;
-
 
 /* Function Prototypes */
 void handler(int signo, siginfo_t *info, void *extra);
@@ -43,7 +38,6 @@ typedef struct{
 	int string_length;
 	int led_control_command;
 }msg_t;
-
 
 
 /* Array of string for populating the structure */
@@ -72,70 +66,91 @@ void set_sig_handler(void)
 }
 
 
+/* Global Variables */
+FILE *fptr;
+sem_t *semaphore1,*semaphore2;
+
+
 int main()
 {
-	void *ptr;
+	set_sig_handler();
+
 	msg_t send_info;
 msg_t receive_info={0};
 
+	void *ptr;
 
-	int shm_fd =shm_open(mem_name, (O_CREAT | O_RDWR), 0666);
+	char *pointer = (char *)&receive_info;
+	
+	/* Create/ open shared memory objects */
+	int shm_fd = shm_open(mem_name, O_CREAT | O_RDWR , 0666);
 
+	/* check file descriptor status */
 	if(shm_fd < 0)
 	{
 		perror("Shared Memory Inaccessable\n");
 		return 1;
 	}
 
-	semaphore1 = sem_open(sem_cli, O_CREAT , 0666, 0);
-
+	/* Open semaphore */
+	semaphore1 = sem_open (sem_cli,0);
+	
+	/* Check return value of semaphore */
 	if(semaphore1 == NULL)
 	{
 		perror("SEMAPHORE NOT CREATED");
 		return 1;
 	}
 
-	semaphore2 = sem_open(sem_ser, O_CREAT , 0666, 0);
 
+	/* Open semaphore */
+	semaphore2 = sem_open (sem_ser,0);
+	
+	/* Check return value of semaphore */
 	if(semaphore2 == NULL)
 	{
 		perror("SEMAPHORE NOT CREATED");
 		return 1;
 	}
 
-	sleep(1);
+	int trunc = ftruncate(shm_fd,SIZE);
 
-	ptr= mmap(0,SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if(trunc == -1)
+	{
+		perror("FILE TRUNCATION FAILED");
+		return 1;
+	}
+
+	ptr = mmap(0,SIZE,(PROT_READ | PROT_WRITE), MAP_SHARED,shm_fd,0);
 
 	for(int i=0;i<10;i++)
 	{
-		sem_wait(semaphore1);
-
-		fptr=fopen("om.txt","a");
-		fprintf(fptr,"Message Received!\n");
-		fprintf(fptr,"Message: %s\n",(char *)ptr);
-		fclose(fptr);
-
 		strcpy(send_info.string,array_for_server[i]);
 		send_info.string_length = strlen(array_for_server[i]);
 		fptr = fopen("om.txt","a");
 		fprintf(fptr,"Message Sent to Server: %s\n",send_info.string);
 		fclose(fptr);
-		sem_post(semaphore2);
+		sem_post(semaphore1);
+		sleep(1);
 
-		shm_unlink(mem_name);
-
-
-		shm_unlink(sem_cli);
-		sem_destroy(semaphore1);
-
-		shm_unlink(sem_ser);
-		sem_destroy(semaphore2);
-
+		sem_wait(semaphore2);
+		fopen("om.txt","a");
+		fprintf(fptr,"Message Received!\nMessage: %s",receive_info.string);
+		fclose(fptr);
 	}
+
+	shm_unlink(mem_name);
+
+
+	shm_unlink(sem_cli);
+	sem_destroy(semaphore1);
+
+	shm_unlink(sem_ser);
+	sem_destroy(semaphore2);
 
 	return 0;
 }
+
 
 /* Signal Handler */
 void handler(int signo, siginfo_t *info, void *extra) 

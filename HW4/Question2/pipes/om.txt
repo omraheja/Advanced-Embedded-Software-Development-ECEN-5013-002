@@ -1,0 +1,68 @@
+Fri Mar  1 23:50:34 2019
+Writing from child to parent
+Fri Mar  1 23:50:34 2019
+In Parent Process
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent0
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent1
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent2
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent3
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent4
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent5
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent6
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent7
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent8
+Fri Mar  1 23:50:34 2019
+Message Received from child: parent9
+Fri Mar  1 23:50:34 2019
+Integer Received from child: 7
+Fri Mar  1 23:50:34 2019
+Integer Received from child: 7
+Fri Mar  1 23:50:34 2019
+Integer Received from child: 7
+Fri Mar  1 23:50:34 2019
+Integer Received from child: 7
+Fri Mar  1 23:50:34 2019
+Integer Received from child: 7
+Fri Mar  1 23:50:34 2019
+Writing to Child
+Fri Mar  1 23:50:34 2019
+Reading from Child
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child0
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child1
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child2
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child3
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child4
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child5
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child6
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child7
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child8
+Fri Mar  1 23:50:34 2019
+Message received from Parent: child9
+Fri Mar  1 23:50:34 2019
+Integer Received from parent : 6
+Fri Mar  1 23:50:34 2019
+Integer Received from parent : 6
+Fri Mar  1 23:50:34 2019
+Integer Received from parent : 6
+Fri Mar  1 23:50:34 2019
+Integer Received from parent : 6
+Fri Mar  1 23:50:34 2019
+Integer Received from parent : 6
