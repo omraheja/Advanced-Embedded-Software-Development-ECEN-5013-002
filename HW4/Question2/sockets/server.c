@@ -1,6 +1,6 @@
 /*  @Author		: Om Raheja
 	@Date  		: 27th February 2019
-	@Filename	: client.c
+	@Filename	: server.c
 	@Course 	: Advanced Embedded Software Development Spring 2019
 	@References	: https://www.youtube.com/watch?v=pFLQmnmDOo
 				: https://gist.github.com/sevko/d23646ba07c77c15fde9
