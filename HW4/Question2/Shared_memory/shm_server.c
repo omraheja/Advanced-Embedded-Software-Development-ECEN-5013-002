@@ -113,7 +113,8 @@ msg_t receive_info={0};
 
 		fptr=fopen("om.txt","a");
 		fprintf(fptr,"Message Received!\n");
-		fprintf(fptr,"Message: %s\n",(char *)ptr);
+		sprintf(ptr,"%s\n",array_for_client[i]);
+		fprintf(fptr,"Message from server : %s\n",(char *)ptr);
 		fclose(fptr);
 
 		strcpy(send_info.string,array_for_server[i]);

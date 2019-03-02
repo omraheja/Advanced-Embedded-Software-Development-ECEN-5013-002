@@ -65,18 +65,19 @@ void set_sig_handler(void)
     }
 }
 
-
-/* Global Variables */
-FILE *fptr;
-sem_t *semaphore1,*semaphore2;
+	FILE *fptr;
 
 
 int main()
 {
 	set_sig_handler();
 
+
+	sem_t *semaphore1,*semaphore2;
+
+
 	msg_t send_info;
-msg_t receive_info={0};
+	msg_t receive_info={0};
 
 	void *ptr;
 
@@ -132,7 +133,7 @@ msg_t receive_info={0};
 		fclose(fptr);
 		sem_post(semaphore1);
 		sleep(1);
-
+		
 		sem_wait(semaphore2);
 		fopen("om.txt","a");
 		fprintf(fptr,"Message Received!\nMessage: %s",receive_info.string);
