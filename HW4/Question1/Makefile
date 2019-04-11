@@ -1,6 +1,6 @@
 # _*_ Makefile _*_
 
-CC=arm-linux-gcc
+CC=gcc
 
 OBJ = mythread.o
 

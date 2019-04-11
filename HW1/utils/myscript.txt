@@ -1,0 +1,31 @@
+User Information
+>>omraheja
+
+Operating System Type/Brand
+>>Description:        Ubuntu 18.04.1 LTS
+
+OS Distribution
+>>Distributor ID:     Ubuntu
+
+OS Version
+>>Release:    18.04
+
+Kernel Version
+>>4.15.0-43-generic
+
+Kernel gcc version build
+>>gcc (Ubuntu 7.3.0-16ubuntu3) 7.3.0
+Copyright (C) 2017 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+Kernel build time
+>>#46-Ubuntu SMP Thu Dec 6 14:45:28 UTC 2018
+
+System Architecture information
+>>x86_64
+
+File System Memory
+              total        used        free      shared  buff/cache   available
+Mem:           4952        1731        2020          68        1200        2914
+Swap:          2047           0        2047

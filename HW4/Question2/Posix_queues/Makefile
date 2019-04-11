@@ -1,6 +1,6 @@
 # _*_ Makefile _*_
 
-CC=gcc
+CC=arm-linux-gcc
 
 OBJS = queue_server.o 
 OBJC = queue_client.o
