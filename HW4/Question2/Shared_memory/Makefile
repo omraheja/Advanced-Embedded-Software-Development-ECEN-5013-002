@@ -1,6 +1,6 @@
 # _*_ Makefile _*_
 
-CC=arm-linux-gcc
+CC=gcc
 
 OBJS = shm_server.o 
 OBJC = shm_client.o
